@@ -59,7 +59,7 @@
     <Button
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:text="Shake"
+        android:text="History"
         android:id="@+id/button"
         android:textSize="25dp"
         android:textAlignment="center"
