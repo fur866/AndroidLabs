@@ -5,6 +5,8 @@ package com.example.fahad.androidlabs;
  */
 
 
+import android.content.Context;
+
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -13,6 +15,7 @@ public class EightBallModel {
     static ArrayList<String> initialResponseArray = new ArrayList<>();
     static ArrayList<String> responseArray = new ArrayList<>();
     static ArrayList<String> responseBackgrounds = new ArrayList<>();
+    Context context;
 
     EightBallModel() {
         this.initialiseResponse();
@@ -20,8 +23,10 @@ public class EightBallModel {
     }
 
 
-    EightBallModel(ArrayList <String> extraResponseArray) {
+    EightBallModel(ArrayList <String> extraResponseArray,Context context) {
+        this.context = context;
         this.initialiseResponse();
+
         for(String resp : initialResponseArray){
             responseArray.add(resp);
         }
@@ -35,12 +40,12 @@ public class EightBallModel {
 
     private void initialiseResponse() {
 
-        this.initialResponseArray.add("Maybe if you try a little harder");
-        this.initialResponseArray.add("Reply hazy, come back tomorrow");
-        this.initialResponseArray.add("It is decidely so");
-        this.initialResponseArray.add("My sources say no");
-        this.initialResponseArray.add("Ask again later");
-        this.initialResponseArray.add("Don't count on it");
+        this.initialResponseArray.add(this.context.getResources().getString(R.string.one));
+        this.initialResponseArray.add(this.context.getResources().getString(R.string.two));
+        this.initialResponseArray.add(this.context.getResources().getString(R.string.three));
+        this.initialResponseArray.add(this.context.getResources().getString(R.string.four));
+        this.initialResponseArray.add(this.context.getResources().getString(R.string.five));
+        this.initialResponseArray.add(this.context.getResources().getString(R.string.six));
     }
 
     private void initialiseBackgrounds(){

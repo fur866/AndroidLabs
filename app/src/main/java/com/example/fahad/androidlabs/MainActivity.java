@@ -3,6 +3,7 @@ package com.example.fahad.androidlabs;
 import android.animation.Animator;
 import android.content.Intent;
 import android.net.Uri;
+import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -40,6 +41,7 @@ public class MainActivity extends AppCompatActivity {
     TextView displayText;
     Button userButton;
     ArrayList<QuestionResponseModel> list;
+    TextToSpeech tTS;
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -59,6 +61,8 @@ public class MainActivity extends AppCompatActivity {
         magicSrc = fortune.magicBackground();
         list.add(new QuestionResponseModel(this.userInput.getText().toString(),randResp));
         int resID = getResources().getIdentifier(magicSrc, "drawable", getPackageName());
+        this.tTS.speak(randResp,TextToSpeech.QUEUE_FLUSH,null);
+
         //this.displayText.startAnimation(myanimation);
         this.displayText.animate().setDuration(2).alpha(0f).setListener(new Animator.AnimatorListener() {
             @Override
@@ -129,15 +133,21 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
+       this.tTS = new TextToSpeech(getApplicationContext(), new TextToSpeech.OnInitListener() {
+            @Override
+            public void onInit(int status) {
+            }
+        }
+        );
         ArrayList<String> newResponses = new ArrayList<>();
         this.list = new ArrayList<QuestionResponseModel>();
         this.load();
-        newResponses.add("Perfect and awesome!");
-        newResponses.add("Yes");
-        newResponses.add("Signs point to yes");
+        newResponses.add(getResources().getString(R.string.seven));
+        newResponses.add(getResources().getString(R.string.eight));
+        newResponses.add(getResources().getString(R.string.nine));
 
         final EightBallModel fortune;
-        fortune = new EightBallModel(newResponses);
+        fortune = new EightBallModel(newResponses,this);
         final String randResp = fortune.magicResponse();
 
         this.background = (LinearLayout) findViewById(R.id.myLayout);

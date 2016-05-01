@@ -1,3 +1,13 @@
 <resources>
     <string name="app_name">Android Labs</string>
+
+    <string name="one">Maybe if you try a little harder</string>
+    <string name="two">Reply hazy, come back tomorrow</string>
+    <string name="three">It is decidely so</string>
+    <string name="four">My sources say no</string>
+    <string name="five">Ask again later</string>
+    <string name="six">Dont count on it</string>
+    <string name="seven">My sources say no</string>
+    <string name="eight">Ask again later</string>
+    <string name="nine">Dont count on it</string>
 </resources>
