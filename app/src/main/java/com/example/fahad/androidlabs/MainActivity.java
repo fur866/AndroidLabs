@@ -1,8 +1,13 @@
 package com.example.fahad.androidlabs;
 
 import android.animation.Animator;
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
+import android.os.AsyncTask;
 import android.speech.tts.TextToSpeech;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -21,18 +26,23 @@ import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.*;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     LinearLayout background;
 
@@ -48,13 +58,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private GoogleApiClient client;
 
-    // animate the eightball model
     private void moveEightBall(EightBallModel fortune) {
 
-//        android.view.animation.Animation myanimation;
-//        myanimation = new android.view.animation.AlphaAnimation(0.0f, 1.0f);
-//        myanimation.setDuration(400);
-//        myanimation.setStartOffset(0);
 
         String magicSrc = "";
         final String randResp = fortune.magicResponse();
@@ -86,9 +91,7 @@ public class MainActivity extends AppCompatActivity {
 
             }
         });
-
         circleImage.setBackgroundResource(resID);
-
     }
 
     @Override
@@ -139,6 +142,8 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         );
+
+
         ArrayList<String> newResponses = new ArrayList<>();
         this.list = new ArrayList<QuestionResponseModel>();
         this.load();
@@ -165,6 +170,18 @@ public class MainActivity extends AppCompatActivity {
 //              list.add(new QuestionResponseModel(userInput.getText().toString(), randResp));
 //              moveEightBall(fortune);
                 Intent intent = new Intent(getApplicationContext(),HistoryActivity.class);
+                ConnectivityManager connMgr = (ConnectivityManager)
+                        getSystemService(getApplicationContext().CONNECTIVITY_SERVICE);
+                NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
+
+                //Firstly check the network connection:
+                if (networkInfo != null && networkInfo.isConnected()) {
+                    new DownloadTask().execute("http://li859-75.members.linode.com/retrieveAllEntries.php");
+                } else {
+
+                    Log.e("Error", "Networking not available!");
+
+                }
                 intent.putExtra("QuestionResponseArray",list);
                 startActivity(intent);
             }
@@ -239,5 +256,63 @@ public class MainActivity extends AppCompatActivity {
         );
         AppIndex.AppIndexApi.end(client, viewAction);
         client.disconnect();
+    }
+
+    private class DownloadTask extends AsyncTask<String, Void, String> {
+        @Override
+        protected String doInBackground(String... urls) {
+
+            try {
+                return performRequest(urls[0]);
+            } catch (IOException e) {
+                return "Unable to retrieve web page. URL may be invalid.";
+            }
+        }
+        // onPostExecute displays the results of the AsyncTask.
+        @Override
+        protected void onPostExecute(String result) {
+            Log.v("tag", result);
+            Log.d("Here: ",result);
+        }
+
+        private String performRequest(String myURL) throws IOException {
+
+            InputStream is = null;
+            int length = 100;
+
+            try{
+                URL url = new URL(myURL);
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setReadTimeout(10000); //10 seconds
+                connection.setConnectTimeout(10000);
+                connection.setRequestMethod("GET");
+                connection.setDoInput(true);
+                connection.connect(); //Kick it off
+                int response = connection.getResponseCode();
+
+                Log.v("Response Cocde: ", new Integer(response).toString());
+
+                is = connection.getInputStream();
+                String stringResult = parseStream(is, length);
+                return stringResult;
+
+            } finally { //Close the input stream when we're done:
+                if (is != null){
+                    is.close();
+                }
+            }
+
+        }
+
+        public String parseStream(InputStream stream, int length) throws IOException, UnsupportedEncodingException {
+
+            BufferedReader reader = new BufferedReader(new InputStreamReader(stream, "UTF-8"));
+            StringBuilder result = new StringBuilder();
+            String line;
+            while((line = reader.readLine()) != null) {
+                result.append(line);
+            }
+            return result.toString();
+        }
     }
 }
