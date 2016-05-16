@@ -2,14 +2,12 @@ package com.example.fahad.androidlabs;
 
 import android.animation.Animator;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.speech.tts.TextToSpeech;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -18,12 +16,15 @@ import android.widget.EditText;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.ImageView;
-import android.widget.RelativeLayout;
 import android.widget.LinearLayout;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
@@ -37,7 +38,6 @@ import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.*;
@@ -169,21 +169,20 @@ public class MainActivity extends Activity {
             public void onClick(View view) {
 //              list.add(new QuestionResponseModel(userInput.getText().toString(), randResp));
 //              moveEightBall(fortune);
-                Intent intent = new Intent(getApplicationContext(),HistoryActivity.class);
+                //Intent intent = new Intent(getApplicationContext(),HistoryActivity.class);
                 ConnectivityManager connMgr = (ConnectivityManager)
                         getSystemService(getApplicationContext().CONNECTIVITY_SERVICE);
                 NetworkInfo networkInfo = connMgr.getActiveNetworkInfo();
-
+                DownloadTask downloadTask = new DownloadTask();
                 //Firstly check the network connection:
                 if (networkInfo != null && networkInfo.isConnected()) {
-                    new DownloadTask().execute("http://li859-75.members.linode.com/retrieveAllEntries.php");
+                    downloadTask.execute("http://li859-75.members.linode.com/retrieveAllEntries.php");
                 } else {
 
                     Log.e("Error", "Networking not available!");
-
                 }
-                intent.putExtra("QuestionResponseArray",list);
-                startActivity(intent);
+//                intent.putExtra("QuestionResponseArray",downloadTask.getList());//downloadTask.getList());
+//                startActivity(intent);
             }
 
         });
@@ -259,6 +258,8 @@ public class MainActivity extends Activity {
     }
 
     private class DownloadTask extends AsyncTask<String, Void, String> {
+
+        private ArrayList<QuestionResponseModel> listQuestions;
         @Override
         protected String doInBackground(String... urls) {
 
@@ -272,7 +273,25 @@ public class MainActivity extends Activity {
         @Override
         protected void onPostExecute(String result) {
             Log.v("tag", result);
-            Log.d("Here: ",result);
+            try {
+                JSONArray array = new JSONArray(result);
+              //  list.clear();
+                this.listQuestions = new ArrayList<QuestionResponseModel>();
+                for(int i = 0; i < array.length(); i++)
+                {
+                    JSONObject object = array.getJSONObject(i);
+                    Log.d("Here p: ",object.getString("question"));
+                    this.listQuestions.add(new QuestionResponseModel(object.getString("question"),object.getString("answer"),object.getString("imageURL")));
+                }
+
+                Intent intent = new Intent(getApplicationContext(),HistoryActivity.class);
+                intent.putExtra("QuestionResponseArray",this.listQuestions);//downloadTask.getList());
+                startActivity(intent);
+            }
+            catch(JSONException e)
+            {
+
+            }
         }
 
         private String performRequest(String myURL) throws IOException {
@@ -313,6 +332,12 @@ public class MainActivity extends Activity {
                 result.append(line);
             }
             return result.toString();
+        }
+
+        public ArrayList<QuestionResponseModel> getList()
+        {
+            //Log.d("Here pp",String.valueOf(this.list.size()));
+            return this.listQuestions;
         }
     }
 }
