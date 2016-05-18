@@ -1,7 +1,10 @@
 package com.example.fahad.androidlabs;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.os.AsyncTask;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +15,9 @@ import android.widget.TextView;
 
 import org.w3c.dom.Text;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 
@@ -54,7 +59,10 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
         QuestionResponseModel questionResponseModel = getItem(position);
         first.setText(questionResponseModel.getQuestion());
         second.setText(questionResponseModel.getAnswer());
-        view.setImageDrawable(LoadImageFromWebOperations(questionResponseModel.getURL()));
+
+        DownloadImage downloadImage = new DownloadImage(view);
+        downloadImage.execute(questionResponseModel.getURL());
+
         return convertView;
     }
 
@@ -72,13 +80,71 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
         }
     }
 
-    public static Drawable LoadImageFromWebOperations(String url) {
-        try {
-            InputStream is = (InputStream) new URL(url).getContent();
-            Drawable d = Drawable.createFromStream(is, "src name");
-            return d;
-        } catch (Exception e) {
+    public class DownloadImage extends AsyncTask<String,Void,Bitmap>
+    {
+        private ImageView imageView;
+
+        public  DownloadImage(ImageView view)
+        {
+            this.imageView = view;
+        }
+
+        @Override
+        protected Bitmap doInBackground(String... urls) {
+                return performRequest(urls[0]);
+        }
+
+        @Override
+        protected void onPostExecute(Bitmap bitmap) {
+            this.imageView.setImageBitmap(bitmap);
+        }
+
+        public Bitmap performRequest(String url)
+        {
+            try {
+                URL urlObject = new URL(url);
+                return BitmapFactory.decodeStream(urlObject.openConnection().getInputStream());
+            }
+            catch (MalformedURLException e)
+            {
+
+            }
+            catch (IOException e)
+            {
+
+            }
             return null;
         }
+
     }
+
+//    public static void LoadImageFromWebOperations(final ImageView view, String url) {
+//
+//        try {
+//            final URL urlObject = new URL(url);
+//            Thread thread = new Thread(new Runnable() {
+//
+//                @Override
+//                public void run() {
+//                    try{
+//                        view.setImageBitmap(BitmapFactory.decodeStream(urlObject.openConnection().getInputStream()));
+//                    }
+//                    catch (Exception e)
+//                    {
+//                    }
+//
+//                }
+//            });
+//
+//            thread.start();
+//            thread.join();
+//        }
+//        catch(MalformedURLException e)
+//        {
+//        }
+//        catch (InterruptedException e)
+//        {
+//
+//        }
+//    }
 }
