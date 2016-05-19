@@ -9,6 +9,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -28,6 +29,8 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
 
     private Context context;
     private ArrayList<QuestionResponseModel> list;
+    private DownloadImage downloadImage;
+
     public HistoryAdapter(Context context, ArrayList<QuestionResponseModel> list)
     {
         super(context,-1,list);
@@ -42,15 +45,19 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
         TextView first;
         TextView second;
         ImageView view;
+        ImageHolder imageHolder;
 
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(R.layout.question_response_model_row, parent, false);
             first = (TextView) convertView.findViewById(R.id.text1);
             second = (TextView) convertView.findViewById(R.id.text2);
             view = (ImageView) convertView.findViewById(R.id.image);
-            convertView.setTag(new ViewHolder(first, second,view));
+            convertView.setTag(R.id.viewHolder,new ViewHolder(first, second,view));
+            imageHolder = new ImageHolder(view);
+            convertView.setTag(R.id.imageHolder,imageHolder);
         } else {
-            ViewHolder viewHolder = (ViewHolder) convertView.getTag();
+            ViewHolder viewHolder = (ViewHolder) convertView.getTag(R.id.viewHolder);
+            imageHolder = (ImageHolder) convertView.getTag(R.id.imageHolder);
             first = viewHolder.q;
             second = viewHolder.a;
             view = viewHolder.imageView;
@@ -60,8 +67,9 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
         first.setText(questionResponseModel.getQuestion());
         second.setText(questionResponseModel.getAnswer());
 
-        DownloadImage downloadImage = new DownloadImage(view);
-        downloadImage.execute(questionResponseModel.getURL());
+        imageHolder.position = position;
+        this.downloadImage = new DownloadImage(imageHolder,position);
+        this.downloadImage.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR,questionResponseModel.getURL());
 
         return convertView;
     }
@@ -80,14 +88,28 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
         }
     }
 
+    public static class ImageHolder
+    {
+        public int position;
+        public ImageView imageView;
+
+        public ImageHolder(ImageView imageView)
+        {
+            this.imageView = imageView;
+        }
+    }
+
     public class DownloadImage extends AsyncTask<String,Void,Bitmap>
     {
-        private ImageView imageView;
+        private int iPosition;
+        private ImageHolder holder;
 
-        public  DownloadImage(ImageView view)
+        public  DownloadImage(ImageHolder imageHolder,int position)
         {
-            this.imageView = view;
+            this.holder = imageHolder;
+            this.iPosition = position;
         }
+
 
         @Override
         protected Bitmap doInBackground(String... urls) {
@@ -96,7 +118,9 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
 
         @Override
         protected void onPostExecute(Bitmap bitmap) {
-            this.imageView.setImageBitmap(bitmap);
+            if(this.iPosition == holder.position) {
+                holder.imageView.setImageBitmap(bitmap);
+            }
         }
 
         public Bitmap performRequest(String url)
@@ -117,34 +141,4 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
         }
 
     }
-
-//    public static void LoadImageFromWebOperations(final ImageView view, String url) {
-//
-//        try {
-//            final URL urlObject = new URL(url);
-//            Thread thread = new Thread(new Runnable() {
-//
-//                @Override
-//                public void run() {
-//                    try{
-//                        view.setImageBitmap(BitmapFactory.decodeStream(urlObject.openConnection().getInputStream()));
-//                    }
-//                    catch (Exception e)
-//                    {
-//                    }
-//
-//                }
-//            });
-//
-//            thread.start();
-//            thread.join();
-//        }
-//        catch(MalformedURLException e)
-//        {
-//        }
-//        catch (InterruptedException e)
-//        {
-//
-//        }
-//    }
 }

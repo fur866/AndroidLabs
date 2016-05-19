@@ -28,6 +28,7 @@ import org.json.JSONObject;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -37,8 +38,11 @@ import java.io.InputStreamReader;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.*;
 
@@ -52,6 +56,7 @@ public class MainActivity extends Activity {
     Button userButton;
     ArrayList<QuestionResponseModel> list;
     TextToSpeech tTS;
+    final static String username = "fur866";
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
      * See https://g.co/AppIndexing/AndroidStudio for more information.
@@ -67,6 +72,9 @@ public class MainActivity extends Activity {
         list.add(new QuestionResponseModel(this.userInput.getText().toString(),randResp));
         int resID = getResources().getIdentifier(magicSrc, "drawable", getPackageName());
         this.tTS.speak(randResp,TextToSpeech.QUEUE_FLUSH,null);
+
+        uploadData data = new uploadData();
+        data.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,this.userInput.getText().toString(),randResp);
 
         //this.displayText.startAnimation(myanimation);
         this.displayText.animate().setDuration(2).alpha(0f).setListener(new Animator.AnimatorListener() {
@@ -338,6 +346,88 @@ public class MainActivity extends Activity {
         {
             //Log.d("Here pp",String.valueOf(this.list.size()));
             return this.listQuestions;
+        }
+    }
+
+    private class uploadData extends AsyncTask<String,Void,String>
+    {
+        @Override
+        protected String doInBackground(String... args)
+        {
+            String result = performUpdate(args[0],args[1]);
+            Log.d("Here",result);
+            return result;
+        }
+
+        public String performUpdate(String question,String answer)
+        {
+            try {
+                URL url = new URL("http://li859-75.members.linode.com/addEntry.php");
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+                connection.setReadTimeout(50000);
+                connection.setConnectTimeout(50000);
+                connection.setRequestMethod("POST");
+                connection.setDoInput(true);
+                connection.setDoOutput(true);
+
+                Uri.Builder builder = new Uri.Builder().appendQueryParameter("question",question)
+                        .appendQueryParameter("answer",answer)
+                        .appendQueryParameter("username",MainActivity.username);
+
+                String query = builder.build().getEncodedQuery();
+                OutputStream os = connection.getOutputStream();
+                BufferedWriter writer = new BufferedWriter(
+                        new OutputStreamWriter(os, "UTF-8"));
+                writer.write(query);
+                writer.flush();
+                writer.close();
+                os.close();
+
+                connection.connect();
+                return readInputStreamToString(connection);
+
+            }
+            catch (MalformedURLException e)
+            {
+
+            }
+            catch (IOException e)
+            {
+
+            }
+            return null;
+        }
+
+        private String readInputStreamToString(HttpURLConnection connection) {
+            String result = null;
+            StringBuffer sb = new StringBuffer();
+            InputStream is = null;
+
+            try {
+                is = new BufferedInputStream(connection.getInputStream());
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                String inputLine = "";
+                while ((inputLine = br.readLine()) != null) {
+                    sb.append(inputLine);
+                }
+                result = sb.toString();
+            }
+            catch (Exception e) {
+
+                result = null;
+            }
+            finally {
+                if (is != null) {
+                    try {
+                        is.close();
+                    }
+                    catch (IOException e) {
+
+                    }
+                }
+            }
+
+            return result;
         }
     }
 }
