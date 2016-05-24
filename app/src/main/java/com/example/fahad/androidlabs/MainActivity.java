@@ -74,7 +74,7 @@ public class MainActivity extends Activity {
         this.tTS.speak(randResp,TextToSpeech.QUEUE_FLUSH,null);
 
         uploadData data = new uploadData();
-        data.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR,this.userInput.getText().toString(),randResp);
+        data.executeOnExecutor(AsyncTask.SERIAL_EXECUTOR,this.userInput.getText().toString(),randResp);
 
         //this.displayText.startAnimation(myanimation);
         this.displayText.animate().setDuration(2).alpha(0f).setListener(new Animator.AnimatorListener() {

@@ -14,10 +14,14 @@ import android.widget.ArrayAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
+
 import org.w3c.dom.Text;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -99,46 +103,29 @@ public class HistoryAdapter extends ArrayAdapter<QuestionResponseModel>{
         }
     }
 
-    public class DownloadImage extends AsyncTask<String,Void,Bitmap>
+    public class DownloadImage extends AsyncTask<String,Void,RequestCreator>
     {
         private int iPosition;
         private ImageHolder holder;
 
-        public  DownloadImage(ImageHolder imageHolder,int position)
-        {
+        public  DownloadImage(ImageHolder imageHolder,int position) {
             this.holder = imageHolder;
             this.iPosition = position;
         }
 
-
         @Override
-        protected Bitmap doInBackground(String... urls) {
-                return performRequest(urls[0]);
+        protected RequestCreator doInBackground(String... urls) {
+            return Picasso.with(context)
+                    .load(urls[0])
+                    .resize(110, 110)
+                    .centerCrop();
         }
 
         @Override
-        protected void onPostExecute(Bitmap bitmap) {
+        protected void onPostExecute(RequestCreator creator) {
             if(this.iPosition == holder.position) {
-                holder.imageView.setImageBitmap(bitmap);
+                creator.into(holder.imageView);
             }
         }
-
-        public Bitmap performRequest(String url)
-        {
-            try {
-                URL urlObject = new URL(url);
-                return BitmapFactory.decodeStream(urlObject.openConnection().getInputStream());
-            }
-            catch (MalformedURLException e)
-            {
-
-            }
-            catch (IOException e)
-            {
-
-            }
-            return null;
-        }
-
     }
 }
